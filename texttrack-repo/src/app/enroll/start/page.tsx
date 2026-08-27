@@ -1,6 +1,11 @@
 import { db } from "@/lib/db";
 import StartEnrollForm from "@/components/employee/StartEnrollForm";
 
+// Renders per-request instead of being baked into the static build — the
+// available tracks can change anytime (a new one added by an admin), and
+// this also stops the build itself from needing a live database connection.
+export const dynamic = "force-dynamic";
+
 // This is the "official place to sign up" — a public, unauthenticated page.
 // Anyone with the link (posted on chipperfield.ag, or texted out) can create
 // their own account, then flows straight into the same SMS consent screen
