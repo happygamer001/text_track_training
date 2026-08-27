@@ -1,5 +1,11 @@
 import { db } from "@/lib/db";
 
+// Renders per-request rather than at build time — this page is personalized
+// per employee via the query string, so there's nothing meaningful to
+// pre-render statically anyway, and it stops the build from needing a live
+// database connection.
+export const dynamic = "force-dynamic";
+
 // TODO: id comes from the query string for now, same as the enrollment flow —
 // replace with the logged-in employee's session once auth.ts (Milestone 4) is
 // built. This page is intentionally read-only: no edit/delete controls exist
