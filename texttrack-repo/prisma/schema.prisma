@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- People ----------
+
+model Employee {
+  id            String   @id @default(cuid())
+  firstName     String
+  lastName      String
+  phone         String   @unique
+  track         Track?   @relation(fields: [trackId], references: [id])
+  trackId       String?
+  currentTopic  Int      @default(1) // position in the track, e.g. "topic 45 of 102"
+  status        EmployeeStatus @default(PRE_ENROLLED) // pre-filled by admin, not yet confirmed
+  createdAt     DateTime @default(now())
+
+  consent       ConsentRecord?
+  progress      TopicProgress[]
+  deliveries    DeliveryLog[]
+  comments      Comment[]
+  otpCodes      OtpCode[]
+}
+
+enum EmployeeStatus {
+  PRE_ENROLLED   // admin created the shell profile, employee hasn't confirmed yet
+  ACTIVE         // employee confirmed profile, training is running
+  STALLED        // flagged: no engagement in 7+ days
+  SEPARATED      // no longer employed, messaging stopped
+}
+
+model Admin {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  passwordHash  String
+  mfaSecret     String?  // set once MFA enrollment is complete
+  role          AdminRole @default(MANAGER)
+  createdAt     DateTime @default(now())
+
+  comments      Comment[]
+  auditLogs     AuditLog[]
+  uploadedAssets ContentAsset[]
+}
+
+enum AdminRole {
+  MANAGER      // sees roster/statistics/comments for their team
+  SUPER_ADMIN  // can also edit tracks, manage all enrollments, system config
+}
+
+// ---------- Consent (the piece Twilio's review is checking) ----------
+
+model ConsentRecord {
+  id              String   @id @default(cuid())
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  employeeId      String   @unique
+  smsConsent      Boolean  @default(false) // explicit, unchecked-by-default checkbox result
+  consentedAt     DateTime?
+  doubleOptInAt   DateTime? // timestamp of the "YES" reply confirming the consent text
+  ipAddress       String?   // captured at the moment consent was given
+  method          String    @default("web_form") // web_form | sms_keyword | verbal (see note in PDF)
+}
+
+// ---------- Curriculum content ----------
+
+model Track {
+  id       String  @id @default(cuid())
+  name     String  // e.g. "Construction", "Manufacturing"
+  employees Employee[]
+  topics   Topic[]
+}
+
+model Topic {
+  id             String   @id @default(cuid())
+  track          Track    @relation(fields: [trackId], references: [id])
+  trackId        String
+  weekNumber     Int
+  category       String
+  title          String
+  smsBody        String   @db.Text
+  deliveryFormat String   // Text | Handout | Portal Video
+  videoFormat    String?  // Memes & Text | Narrated Slideshow | From the Boss | AI Narrated
+  mediaUrl       String?  // deprecated — superseded by ContentAsset below, kept only so
+                           // earlier-imported curriculum rows aren't orphaned
+  progress       TopicProgress[]
+  assets         ContentAsset[]
+}
+
+// A versioned piece of learning material attached to a topic. Employees only ever
+// see the current asset (isCurrent: true); older versions stay in the table as a
+// history of what changed and when, rather than being overwritten.
+model ContentAsset {
+  id           String   @id @default(cuid())
+  topic        Topic    @relation(fields: [topicId], references: [id])
+  topicId      String
+  type         String   // video | handout | document
+  url          String   // Vercel Blob URL for uploaded files, or a Bunny Stream link for video
+  fileName     String
+  isCurrent    Boolean  @default(true)
+  uploadedBy   Admin    @relation(fields: [uploadedById], references: [id])
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  @@index([topicId, type, isCurrent])
+}
+
+model TopicProgress {
+  id          String    @id @default(cuid())
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  employeeId  String
+  topic       Topic     @relation(fields: [topicId], references: [id])
+  topicId     String
+  clickedAt   DateTime?
+  completedAt DateTime?
+
+  @@unique([employeeId, topicId])
+}
+
+// ---------- Messaging ----------
+
+model DeliveryLog {
+  id           String   @id @default(cuid())
+  employee     Employee @relation(fields: [employeeId], references: [id])
+  employeeId   String
+  topicId      String?
+  body         String   @db.Text
+  status       String   // queued | sent | delivered | failed
+  twilioSid    String?
+  sentAt       DateTime @default(now())
+}
+
+// ---------- Auth ----------
+
+model OtpCode {
+  id          String   @id @default(cuid())
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  employeeId  String
+  codeHash    String   // never store the raw code — hash it (see lib/otp.ts)
+  expiresAt   DateTime // issued time + 10 minutes, per NIST SP 800-63B-4 guidance
+  attempts    Int      @default(0) // capped at 5 before requiring a new code
+  consumedAt  DateTime?
+  createdAt   DateTime @default(now())
+}
+
+// ---------- Admin-side extras ----------
+
+model Comment {
+  id          String   @id @default(cuid())
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  employeeId  String
+  author      Admin    @relation(fields: [authorId], references: [id])
+  authorId    String
+  body        String   @db.Text
+  createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  admin       Admin    @relation(fields: [adminId], references: [id])
+  adminId     String
+  action      String   // e.g. "edited_profile", "viewed_roster", "changed_enrollment"
+  targetId    String?  // id of the employee/record affected
+  createdAt   DateTime @default(now())
+}
