@@ -1,11 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 // TODO (see api/enrollment/[id]/route.ts): this reads a raw employee id from
 // the URL. Swap for a signed invite token before this goes live.
 export default function ConfirmProfilePage() {
+  return (
+    <Suspense fallback={<CenteredMessage text="Loading..." />}>
+      <ConfirmProfileInner />
+    </Suspense>
+  );
+}
+
+function ConfirmProfileInner() {
   const router = useRouter();
   const employeeId = useSearchParams().get("id");
 
