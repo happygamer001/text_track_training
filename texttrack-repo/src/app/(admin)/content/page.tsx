@@ -1,6 +1,11 @@
 import { db } from "@/lib/db";
 import ContentUploadForm from "@/components/admin/ContentUploadForm";
 
+// Renders per-request rather than at build time — this page shows live
+// content state (what's currently uploaded) and stops the build from
+// needing a live database connection.
+export const dynamic = "force-dynamic";
+
 // TODO: adminId comes from the query string for now — replace with the
 // logged-in admin's session once auth.ts (Milestone 4) is built.
 export default async function ContentManagerPage({
