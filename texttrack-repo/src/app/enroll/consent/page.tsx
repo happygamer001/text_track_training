@@ -1,9 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function ConsentPage() {
+  return (
+    <Suspense fallback={<CenteredMessage text="Loading..." />}>
+      <ConsentPageInner />
+    </Suspense>
+  );
+}
+
+function ConsentPageInner() {
   const router = useRouter();
   const employeeId = useSearchParams().get("id");
 
@@ -99,6 +107,14 @@ export default function ConsentPage() {
           </button>
         </div>
       </div>
+    </main>
+  );
+}
+
+function CenteredMessage({ text }: { text: string }) {
+  return (
+    <main className="min-h-screen flex items-center justify-center px-4">
+      <p className="text-sm text-gray-500 text-center max-w-xs">{text}</p>
     </main>
   );
 }
