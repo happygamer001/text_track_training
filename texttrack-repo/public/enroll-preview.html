@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TextTrack — Enrollment Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1F3A5F;
+    --navy-dark: #16283F;
+    --rust: #B5651D;
+    --rust-dark: #8F4F16;
+    --cream: #F6F3EC;
+    --paper: #FFFFFF;
+    --ink: #22201C;
+    --ink-soft: #6B6860;
+    --line: #E4E0D6;
+    --green: #3B6D11;
+    --green-bg: #EAF3DE;
+    --amber-bg: #FAEEDA;
+    --amber-line: #C98A2E;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 60px;
+  }
+  .masthead {
+    text-align: center;
+    margin-bottom: 28px;
+    max-width: 480px;
+  }
+  .masthead .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--rust-dark);
+    font-weight: 500;
+  }
+  .masthead h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 6px 0 8px;
+  }
+  .masthead p {
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .stage {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .phone {
+    width: 320px;
+    height: 640px;
+    background: var(--navy-dark);
+    border-radius: 40px;
+    padding: 12px;
+    box-shadow: 0 24px 48px -12px rgba(31,58,95,0.35), 0 2px 6px rgba(0,0,0,0.1);
+    position: relative;
+  }
+  .phone::before {
+    content: "";
+    position: absolute;
+    top: 12px; left: 50%;
+    transform: translateX(-50%);
+    width: 90px; height: 18px;
+    background: var(--navy-dark);
+    border-radius: 0 0 14px 14px;
+    z-index: 3;
+  }
+  .screen {
+    background: var(--paper);
+    width: 100%; height: 100%;
+    border-radius: 30px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .statusbar {
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 22px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink);
+    flex-shrink: 0;
+  }
+  .appbar {
+    background: var(--navy);
+    color: #fff;
+    padding: 14px 20px 16px;
+    flex-shrink: 0;
+  }
+  .appbar .brand {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.01em;
+  }
+  .appbar .step {
+    font-size: 12px;
+    color: #B9C6D6;
+    margin-top: 2px;
+  }
+  .dots {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .dot {
+    width: 22px; height: 3px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.25);
+    transition: background 0.3s;
+  }
+  .dot.active { background: #fff; }
+  .dot.done { background: var(--rust); }
+
+  .content {
+    flex: 1;
+    padding: 22px 20px 20px;
+    overflow-y: auto;
+  }
+  .content h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: var(--ink);
+  }
+  .content .sub {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0 0 20px;
+    line-height: 1.5;
+  }
+
+  .field {
+    margin-bottom: 16px;
+  }
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--paper);
+  }
+  .field input:focus {
+    outline: none;
+    border-color: var(--navy);
+  }
+  .track-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-line);
+    color: #6B4A12;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 20px;
+  }
+
+  .consent-card {
+    background: var(--amber-bg);
+    border: 1.5px solid var(--amber-line);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 18px;
+  }
+  .consent-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    cursor: pointer;
+  }
+  .checkbox {
+    width: 22px; height: 22px;
+    border-radius: 5px;
+    border: 2px solid var(--rust-dark);
+    background: var(--paper);
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .checkbox svg {
+    width: 13px; height: 13px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .checkbox.checked {
+    background: var(--rust-dark);
+    border-color: var(--rust-dark);
+  }
+  .checkbox.checked svg { opacity: 1; }
+  .consent-text {
+    font-size: 13px;
+    line-height: 1.55;
+    color: #4A3410;
+  }
+  .consent-fine {
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: #7A5A20;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--amber-line);
+  }
+
+  .btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: 9px;
+    border: none;
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.08s, opacity 0.15s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary {
+    background: var(--navy);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--navy-dark); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-soft);
+    font-size: 13px;
+    margin-top: 10px;
+  }
+
+  .outcome {
+    text-align: center;
+    padding-top: 40px;
+  }
+  .outcome-icon {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+  }
+  .outcome-icon.sms { background: var(--green-bg); color: var(--green); }
+  .outcome-icon.portal { background: #EFF1EC; color: var(--ink-soft); }
+  .outcome h2 { font-size: 17px; margin-bottom: 8px; }
+  .outcome p { font-size: 13px; color: var(--ink-soft); line-height: 1.6; padding: 0 8px; }
+  .sms-preview {
+    margin-top: 22px;
+    background: #F0F0EC;
+    border-radius: 14px;
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--ink);
+    position: relative;
+  }
+  .sms-preview::before {
+    content: "Text message preview";
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+
+  .feedback-panel {
+    width: 320px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 22px;
+    font-size: 13px;
+  }
+  .feedback-panel h3 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--navy);
+    margin: 0 0 14px;
+  }
+  .feedback-panel .item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+    align-items: flex-start;
+  }
+  .feedback-panel .item .marker {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--rust);
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .feedback-panel .item p {
+    margin: 0;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .feedback-panel .item strong {
+    color: var(--ink);
+  }
+  .reset-link {
+    display: block;
+    text-align: center;
+    margin-top: 24px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .content { animation: fadeIn 0.25s ease; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 700px) {
+    .stage { flex-direction: column; align-items: center; }
+    .feedback-panel { width: 320px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="eyebrow">Draft preview — not final copy</div>
+  <h1>Employee enrollment screens</h1>
+  <p>This is the actual flow a new employee walks through: confirm their info, then the SMS consent screen. Tap through it like they would, then use the notes on the right to flag anything.</p>
+</div>
+
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar">
+        <span>9:41</span>
+        <span>●●●●</span>
+      </div>
+
+      <!-- SCREEN 1: Confirm profile -->
+      <div id="screen-confirm">
+        <div class="appbar">
+          <div class="brand">TextTrack</div>
+          <div class="step">Step 1 of 2 — Confirm your info</div>
+          <div class="dots">
+            <div class="dot active"></div>
+            <div class="dot"></div>
+          </div>
+        </div>
+        <div class="content">
+          <h2>Welcome to TextTrack</h2>
+          <p class="sub">Your foreman set up your account. Double-check everything below before you continue.</p>
+
+          <div class="field">
+            <label>Full name</label>
+            <input type="text" value="Jordan Ramirez">
+          </div>
+          <div class="field">
+            <label>Mobile number</label>
+            <input type="text" value="(308) 555-0142">
+          </div>
+          <div class="field">
+            <label>Training track</label><br>
+            <span class="track-badge">🔧 Construction — Foreman Curriculum</span>
+          </div>
+        </div>
+        <div style="padding: 0 20px 22px;">
+          <button class="btn btn-primary" onclick="goTo('consent')">Looks good, continue</button>
+        </div>
+      </div>
+
+      <!-- SCREEN 2: SMS consent -->
+      <div id="screen-consent" style="display:none;">
+        <div class="appbar">
+          <div class="brand">TextTrack</div>
+          <div class="step">Step 2 of 2 — Text message training</div>
+          <div class="dots">
+            <div class="dot done"></div>
+            <div class="dot active"></div>
+          </div>
+        </div>
+        <div class="content">
+          <h2>How should we send your training?</h2>
+          <p class="sub">Choose whether to receive lessons by text. Either way, you'll have full access through the app.</p>
+
+          <div class="consent-card">
+            <div class="consent-row" onclick="toggleConsent()">
+              <div class="checkbox" id="checkbox"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div class="consent-text">Yes, send me my training by text message.</div>
+            </div>
+            <div class="consent-fine">
+              Message frequency varies. Message and data rates may apply. No mobile information is shared with third parties for marketing purposes. Reply STOP anytime to cancel.
+            </div>
+          </div>
+
+          <p class="sub" style="margin-top: -6px;">Leaving this unchecked is fine — you'll still get every lesson through the Courses tab.</p>
+        </div>
+        <div style="padding: 0 20px 22px;">
+          <button class="btn btn-primary" id="continueBtn" onclick="submitConsent()">Continue</button>
+        </div>
+      </div>
+
+      <!-- SCREEN 3a: SMS outcome -->
+      <div id="screen-outcome-sms" style="display:none;">
+        <div class="appbar">
+          <div class="brand">TextTrack</div>
+          <div class="step">You're set</div>
+          <div class="dots">
+            <div class="dot done"></div>
+            <div class="dot done"></div>
+          </div>
+        </div>
+        <div class="content outcome">
+          <div class="outcome-icon sms">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h2>Almost done</h2>
+          <p>One last step — reply YES to the text we just sent to confirm.</p>
+          <div class="sms-preview">
+            Reply YES to start receiving TextTrack training texts. Msg &amp; data rates may apply. Reply STOP to cancel.
+          </div>
+        </div>
+        <div style="padding: 20px;">
+          <span class="reset-link" onclick="reset()">↺ Restart preview</span>
+        </div>
+      </div>
+
+      <!-- SCREEN 3b: Portal-only outcome -->
+      <div id="screen-outcome-portal" style="display:none;">
+        <div class="appbar">
+          <div class="brand">TextTrack</div>
+          <div class="step">You're set</div>
+          <div class="dots">
+            <div class="dot done"></div>
+            <div class="dot done"></div>
+          </div>
+        </div>
+        <div class="content outcome">
+          <div class="outcome-icon portal">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4V4z" stroke="currentColor" stroke-width="2"/><path d="M4 9h16" stroke="currentColor" stroke-width="2"/></svg>
+          </div>
+          <h2>You're all set</h2>
+          <p>Your training is ready in the Courses tab anytime. You can turn on text reminders later from your Profile page if you change your mind.</p>
+        </div>
+        <div style="padding: 20px;">
+          <span class="reset-link" onclick="reset()">↺ Restart preview</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="feedback-panel">
+    <h3>What to look at</h3>
+    <div class="item">
+      <div class="marker"></div>
+      <p><strong>Copy:</strong> is "Looks good, continue" the right tone, or too casual for the crew?</p>
+    </div>
+    <div class="item">
+      <div class="marker"></div>
+      <p><strong>Consent box:</strong> unchecked by default, on its own card, separate from the profile step — this is the part Twilio's review checks for directly.</p>
+    </div>
+    <div class="item">
+      <div class="marker"></div>
+      <p><strong>Both outcomes work:</strong> try continuing with the box checked, then restart and try it unchecked — enrollment completes either way.</p>
+    </div>
+    <div class="item">
+      <div class="marker"></div>
+      <p><strong>Track badge:</strong> placeholder data shown — real version pulls from the admin's pre-filled profile.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  let consentChecked = false;
+
+  function goTo(screen) {
+    document.getElementById('screen-confirm').style.display = 'none';
+    document.getElementById('screen-consent').style.display = 'none';
+    document.getElementById('screen-outcome-sms').style.display = 'none';
+    document.getElementById('screen-outcome-portal').style.display = 'none';
+    document.getElementById('screen-' + screen).style.display = 'flex';
+    document.getElementById('screen-' + screen).style.flexDirection = 'column';
+    document.getElementById('screen-' + screen).style.height = '100%';
+  }
+
+  function toggleConsent() {
+    consentChecked = !consentChecked;
+    const box = document.getElementById('checkbox');
+    box.classList.toggle('checked', consentChecked);
+  }
+
+  function submitConsent() {
+    if (consentChecked) {
+      goTo('outcome-sms');
+    } else {
+      goTo('outcome-portal');
+    }
+  }
+
+  function reset() {
+    consentChecked = false;
+    document.getElementById('checkbox').classList.remove('checked');
+    goTo('confirm');
+  }
+
+  // init
+  goTo('confirm');
+</script>
+
+</body>
+</html>
