@@ -70,7 +70,7 @@
 
   .phone {
     width: 320px;
-    height: 640px;
+    height: 660px;
     background: var(--navy-dark);
     border-radius: 40px;
     padding: 12px;
@@ -199,7 +199,7 @@
     border: 1.5px solid var(--amber-line);
     border-radius: 10px;
     padding: 16px;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
   }
   .consent-row {
     display: flex;
@@ -243,6 +243,22 @@
     border-top: 1px solid var(--amber-line);
   }
 
+  /* Required legal links, directly on the opt-in screen */
+  .legal-links {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 18px;
+  }
+  .legal-links a {
+    color: var(--navy);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .legal-links span { color: var(--line); }
+
   .btn {
     width: 100%;
     padding: 13px;
@@ -260,12 +276,6 @@
     color: #fff;
   }
   .btn-primary:hover { background: var(--navy-dark); }
-  .btn-ghost {
-    background: transparent;
-    color: var(--ink-soft);
-    font-size: 13px;
-    margin-top: 10px;
-  }
 
   .outcome {
     text-align: center;
@@ -439,6 +449,12 @@
             </div>
           </div>
 
+          <div class="legal-links">
+            <a href="https://training.chipperfield.ag/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>
+            <span>|</span>
+            <a href="https://training.chipperfield.ag/terms-of-service.html" target="_blank" rel="noopener">Terms of Service</a>
+          </div>
+
           <p class="sub" style="margin-top: -6px;">Leaving this unchecked is fine — you'll still get every lesson through the Courses tab.</p>
         </div>
         <div style="padding: 0 20px 22px;">
@@ -500,19 +516,15 @@
     <h3>What to look at</h3>
     <div class="item">
       <div class="marker"></div>
-      <p><strong>Copy:</strong> is "Looks good, continue" the right tone, or too casual for the crew?</p>
+      <p><strong>Legal links added:</strong> Privacy Policy and Terms of Service are now linked directly on the consent screen, per Twilio's requirement that the opt-in page itself link to both.</p>
     </div>
     <div class="item">
       <div class="marker"></div>
-      <p><strong>Consent box:</strong> unchecked by default, on its own card, separate from the profile step — this is the part Twilio's review checks for directly.</p>
+      <p><strong>Consent box:</strong> unchecked by default, on its own card, separate from the profile step.</p>
     </div>
     <div class="item">
       <div class="marker"></div>
       <p><strong>Both outcomes work:</strong> try continuing with the box checked, then restart and try it unchecked — enrollment completes either way.</p>
-    </div>
-    <div class="item">
-      <div class="marker"></div>
-      <p><strong>Track badge:</strong> placeholder data shown — real version pulls from the admin's pre-filled profile.</p>
     </div>
   </div>
 </div>
