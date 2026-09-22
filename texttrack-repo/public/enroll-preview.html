@@ -139,8 +139,31 @@
     gap: 14px;
     font-size: 12.5px;
     font-weight: 600;
-    margin-bottom: 22px;
+    margin-bottom: 0;
   }
+  .legal-consent-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    cursor: pointer;
+    margin: 14px 0 22px;
+  }
+  .checkbox-sm {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    border: 2px solid var(--navy);
+    background: var(--paper);
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .checkbox-sm svg { width: 11px; height: 11px; opacity: 0; transition: opacity 0.15s; }
+  .checkbox-sm.checked { background: var(--navy); border-color: var(--navy); }
+  .checkbox-sm.checked svg { opacity: 1; }
+  .legal-consent-text { font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
   .legal-links a { color: var(--navy); text-decoration: underline; text-underline-offset: 2px; }
   .legal-links span { color: var(--line); }
 
@@ -263,8 +286,17 @@
         <a href="https://training.chipperfield.ag/terms-of-service.html" target="_blank" rel="noopener">Terms of Service</a>
       </div>
 
+      <!-- Separate, independent checkbox — deliberately distinct from the SMS -->
+      <!-- consent checkbox above. Agreeing to the Privacy Policy and Terms is -->
+      <!-- required to continue either way; it is not the same consent as -->
+      <!-- opting into text messages. -->
+      <div class="legal-consent-row" onclick="toggleLegalAgree()">
+        <div class="checkbox-sm" id="checkboxLegal"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="legal-consent-text">I have read and agree to the Privacy Policy and Terms of Service.</div>
+      </div>
+
       <button class="btn btn-primary" onclick="submitConsent()">Continue</button>
-      <p class="decline-note">Leaving the box unchecked is fine — you'll still get every lesson through the Courses tab instead of by text.</p>
+      <p class="decline-note">Leaving the SMS box unchecked is fine — you'll still get every lesson through the Courses tab instead of by text.</p>
     </div>
 
     <!-- Outcome screens — shown only after Continue is clicked. Not part of -->
@@ -297,20 +329,32 @@
 
 <script>
   let consentChecked = false;
+  let legalAgreed = false;
 
   function toggleConsent() {
     consentChecked = !consentChecked;
     document.getElementById('checkbox').classList.toggle('checked', consentChecked);
   }
 
+  function toggleLegalAgree() {
+    legalAgreed = !legalAgreed;
+    document.getElementById('checkboxLegal').classList.toggle('checked', legalAgreed);
+  }
+
   function submitConsent() {
+    if (!legalAgreed) {
+      alert('Please check the box confirming you\'ve read the Privacy Policy and Terms of Service before continuing.');
+      return;
+    }
     document.getElementById('mainView').style.display = 'none';
     document.getElementById(consentChecked ? 'outcomeSms' : 'outcomePortal').style.display = 'block';
   }
 
   function reset() {
     consentChecked = false;
+    legalAgreed = false;
     document.getElementById('checkbox').classList.remove('checked');
+    document.getElementById('checkboxLegal').classList.remove('checked');
     document.getElementById('outcomeSms').style.display = 'none';
     document.getElementById('outcomePortal').style.display = 'none';
     document.getElementById('mainView').style.display = 'block';
