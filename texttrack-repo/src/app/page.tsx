@@ -1,35 +1,58 @@
-// There's no real employee login screen yet (Milestone 4), so this page
-// doesn't try to be one. Employees always arrive via a personal link (their
-// enrollment invite or a training text), never by typing this bare
-// subdomain — so the main path here just points them to the info page on
-// the main site. Admins, who do need a real reason to land here directly,
-// get a distinct, deliberately less prominent path to the dashboard.
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+// Temporary stand-in for real admin login (Milestone C). Right now every
+// admin page reads its adminId from the URL rather than a session — this
+// page just gives that pattern an actual entry point to click into, instead
+// of requiring someone to hand-type a URL with their ID already in it.
 //
-// TODO: once real admin auth (Milestone C) is built, replace the "Admin"
-// link below with an actual login screen instead of linking straight to
-// /content.
-export default function HomePage() {
+// TODO: replace this whole page with real email + password + MFA login
+// once Milestone C is built, and have it set a session instead of passing
+// an id around in the URL.
+export default function AdminEntryPage() {
+  const router = useRouter();
+  const [adminId, setAdminId] = useState("");
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!adminId.trim()) return;
+    router.push(`/content?adminId=${adminId.trim()}`);
+  }
+
   return (
     <main className="min-h-screen flex items-center justify-center px-4">
-      <div className="card w-full max-w-sm p-8 text-center">
-        <h1 className="text-xl font-bold text-navy mb-2">TextTrack</h1>
+      <div className="card w-full max-w-sm p-8">
+        <h1 className="text-lg font-bold text-navy mb-1">Admin Access</h1>
         <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-          Chipperfield Ag Erectors LLC
+          Real admin login isn&apos;t built yet — enter your Admin ID to continue to the
+          dashboard for now.
         </p>
 
-        <a
-          href="https://chipperfield.ag/employee-training"
-          className="block w-full bg-navy hover:bg-navy-dark text-white font-semibold text-sm py-3 rounded-lg transition mb-3"
-        >
-          I&apos;m an employee
-        </a>
+        <form onSubmit={handleSubmit}>
+          <label className="block text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-1.5">
+            Admin ID
+          </label>
+          <input
+            type="text"
+            value={adminId}
+            onChange={(e) => setAdminId(e.target.value)}
+            placeholder="e.g. cmg3k9f2a0001..."
+            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm mb-4 focus:outline-none focus:border-navy"
+          />
+          <button
+            type="submit"
+            className="w-full bg-navy hover:bg-navy-dark text-white font-semibold text-sm py-3 rounded-lg transition"
+          >
+            Continue to Dashboard
+          </button>
+        </form>
 
-        <a
-          href="/admin"
-          className="block w-full text-gray-400 hover:text-gray-600 text-xs font-medium py-2 transition"
-        >
-          Admin dashboard →
-        </a>
+        <p className="text-xs text-gray-400 mt-5 text-center leading-relaxed">
+          Don&apos;t have your Admin ID? Check your seed script output, or ask whoever set up
+          your account.
+        </p>
       </div>
     </main>
   );
