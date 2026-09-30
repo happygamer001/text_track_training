@@ -1,35 +1,87 @@
-import { db } from "@/lib/db";
-import StartEnrollForm from "@/components/employee/StartEnrollForm";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default async function StartEnrollPage() {
-  const tracks = await db.track.findMany({ select: { id: true, name: true } });
+export default function StartEnrollForm({
+  tracks,
+}: {
+  tracks: { id: string; name: string }[];
+}) {
+  const router = useRouter();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [trackId, setTrackId] = useState(tracks[0]?.id ?? "");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+    try {
+      const res = await fetch("/api/enrollment/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ firstName, lastName, phone, trackId }),
+      });
+      if (!res.ok) throw new Error("failed");
+      const { employeeId } = await res.json();
+      // Routes into the combined confirm+consent view — not a separate
+      // consent step anymore.
+      router.push(`/enroll/confirm?id=${employeeId}`);
+    } catch {
+      setError("Something went wrong. Check your info and try again.");
+      setSubmitting(false);
+    }
+  }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 py-10">
-      <div className="card w-full max-w-sm overflow-hidden">
-        <div className="bg-navy text-white px-5 py-4">
-          <div className="font-bold text-sm">TextTrack</div>
-          <div className="text-xs text-blue-100 mt-0.5">Sign up</div>
-        </div>
+    <form onSubmit={handleSubmit}>
+      <Field label="First name" value={firstName} onChange={setFirstName} />
+      <Field label="Last name" value={lastName} onChange={setLastName} />
+      <Field label="Mobile number" value={phone} onChange={setPhone} placeholder="(308) 555-0142" />
 
-        <div className="px-5 py-5">
-          <h1 className="text-lg font-bold mb-1">Join TextTrack</h1>
-          <p className="text-sm text-gray-500 mb-5 leading-relaxed">
-            Enter your info to get started. You&apos;ll choose how you want to receive your
-            training on the next screen.
-          </p>
-
-          {tracks.length === 0 ? (
-            <p className="text-sm text-gray-400">
-              No training tracks are set up yet — check back soon.
-            </p>
-          ) : (
-            <StartEnrollForm tracks={tracks} />
-          )}
-        </div>
+      <div className="mb-5">
+        <label className="block text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-1.5">
+          Which crew are you on?
+        </label>
+        <select
+          value={trackId}
+          onChange={(e) => setTrackId(e.target.value)}
+          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-navy"
+        >
+          {tracks.map((t) => (
+            <option key={t.id} value={t.id}>{t.name}</option>
+          ))}
+        </select>
       </div>
-    </main>
+
+      {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+
+      <button
+        type="submit"
+        disabled={submitting}
+        className="w-full bg-navy hover:bg-navy-dark disabled:opacity-60 text-white font-semibold text-sm py-3 rounded-lg transition"
+      >
+        {submitting ? "Creating your account..." : "Continue"}
+      </button>
+    </form>
+  );
+}
+
+function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <div className="mb-4">
+      <label className="block text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-1.5">{label}</label>
+      <input
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-navy"
+      />
+    </div>
   );
 }
