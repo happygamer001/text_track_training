@@ -20,7 +20,7 @@ async function postJson(url: string, payload: unknown) {
   return data;
 }
 
-export function NewTrackForm({ adminId }: { adminId: string | null }) {
+export function NewTrackForm() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -31,7 +31,7 @@ export function NewTrackForm({ adminId }: { adminId: string | null }) {
     setBusy(true);
     setMsg(null);
     try {
-      await postJson("/api/admin/tracks", { adminId, name });
+      await postJson("/api/admin/tracks", { name });
       setName("");
       setMsg({ ok: true, text: "Track created." });
       router.refresh();
@@ -55,7 +55,7 @@ export function NewTrackForm({ adminId }: { adminId: string | null }) {
           required
         />
         <button
-          disabled={busy || !adminId}
+          disabled={busy}
           className="bg-navy hover:bg-navy-dark disabled:opacity-50 text-white text-sm font-semibold px-4 rounded-lg"
         >
           {busy ? "Saving…" : "Create"}
@@ -66,13 +66,7 @@ export function NewTrackForm({ adminId }: { adminId: string | null }) {
   );
 }
 
-export function AddTopicForm({
-  adminId,
-  tracks,
-}: {
-  adminId: string | null;
-  tracks: TrackOption[];
-}) {
+export function AddTopicForm({ tracks }: { tracks: TrackOption[] }) {
   const router = useRouter();
   const [trackId, setTrackId] = useState(tracks[0]?.id ?? "");
   const [weekNumber, setWeekNumber] = useState<string>(String(tracks[0]?.nextWeek ?? 1));
@@ -96,7 +90,6 @@ export function AddTopicForm({
     setMsg(null);
     try {
       await postJson("/api/admin/topics", {
-        adminId,
         trackId,
         weekNumber,
         category,
@@ -170,7 +163,7 @@ export function AddTopicForm({
           placeholder="e.g. From the Boss" />
       </div>
       <button
-        disabled={busy || !adminId}
+        disabled={busy}
         className="bg-navy hover:bg-navy-dark disabled:opacity-50 text-white text-sm font-semibold px-4 py-2.5 rounded-lg"
       >
         {busy ? "Saving…" : "Add topic"}

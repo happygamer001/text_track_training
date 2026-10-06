@@ -3,16 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-// TODO: adminId is passed in as a prop from the query string for now (see
-// (admin)/content/page.tsx) — replace with the logged-in admin's id from the
-// session once auth.ts (Milestone 4) is built.
+// Who is uploading is taken from the signed-in session on the server — the
+// browser never sends an admin id.
 export default function ContentUploadForm({
   topicId,
-  adminId,
   hasExisting,
 }: {
   topicId: string;
-  adminId: string | null;
   hasExisting: boolean;
 }) {
   const router = useRouter();
@@ -24,10 +21,6 @@ export default function ContentUploadForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!adminId) {
-      setError("Missing admin session — this link needs ?adminId=... until real login is built.");
-      return;
-    }
     setSubmitting(true);
     setError("");
 
@@ -60,7 +53,7 @@ export default function ContentUploadForm({
       const res = await fetch("/api/admin/content", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topicId, type, url, fileName, uploadedById: adminId }),
+        body: JSON.stringify({ topicId, type, url, fileName }),
       });
       if (!res.ok) throw new Error("save_failed");
 

@@ -25,3 +25,18 @@ export function checkRateLimit(key: string): { allowed: boolean } {
   entry.count += 1;
   return { allowed: true };
 }
+
+// Configurable variant for things like admin login attempts.
+const custom = new Map<string, { count: number; windowStart: number }>();
+
+export function checkLimit(key: string, max: number, windowMs: number): { allowed: boolean } {
+  const now = Date.now();
+  const entry = custom.get(key);
+  if (!entry || now - entry.windowStart > windowMs) {
+    custom.set(key, { count: 1, windowStart: now });
+    return { allowed: true };
+  }
+  if (entry.count >= max) return { allowed: false };
+  entry.count += 1;
+  return { allowed: true };
+}

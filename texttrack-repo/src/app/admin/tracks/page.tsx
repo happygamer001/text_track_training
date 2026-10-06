@@ -4,14 +4,8 @@ import { NewTrackForm, AddTopicForm } from "@/components/admin/CurriculumForms";
 
 export const dynamic = "force-dynamic";
 
-// TODO: adminId comes from the query string until real auth (Milestone C).
-export default async function TracksPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ adminId?: string }>;
-}) {
-  const { adminId } = await searchParams;
-
+// Protected by src/middleware.ts (signed-in admins only).
+export default async function TracksPage() {
   const tracks = await db.track.findMany({
     orderBy: { name: "asc" },
     include: { topics: { orderBy: { weekNumber: "asc" } } },
@@ -25,23 +19,15 @@ export default async function TracksPage({
 
   return (
     <main className="min-h-screen px-6 py-10 max-w-3xl mx-auto">
-      <Link href={`/admin`} className="text-xs text-gray-400 hover:text-navy">← Admin</Link>
+      <Link href="/admin" className="text-xs text-gray-400 hover:text-navy">← Admin</Link>
       <h1 className="text-xl font-bold text-navy mt-2 mb-1">Tracks & Topics</h1>
       <p className="text-sm text-gray-500 mb-6">
         Create tracks and add the weekly topics employees receive. Attach videos and handouts to a
         topic afterwards in the{" "}
-        <Link className="underline text-navy" href={`/content${adminId ? `?adminId=${adminId}` : ""}`}>
-          Content Manager
-        </Link>.
+        <Link className="underline text-navy" href="/content">Content Manager</Link>.
       </p>
 
-      {!adminId && (
-        <div className="bg-amber-50 border border-amber-300 text-amber-900 text-xs rounded-lg p-3 mb-6">
-          No adminId in the URL — saving is disabled. Enter through the Admin page.
-        </div>
-      )}
-
-      <NewTrackForm adminId={adminId ?? null} />
+      <NewTrackForm />
 
       <h2 className="text-sm font-bold uppercase tracking-wide text-rust mb-3">Existing</h2>
       {tracks.length === 0 && <p className="text-sm text-gray-400 mb-8">No tracks yet.</p>}
@@ -64,7 +50,7 @@ export default async function TracksPage({
         ))}
       </div>
 
-      <AddTopicForm adminId={adminId ?? null} tracks={options} />
+      <AddTopicForm tracks={options} />
     </main>
   );
 }

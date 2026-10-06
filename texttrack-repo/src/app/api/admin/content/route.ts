@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireAdminApi } from "@/lib/adminSession";
 
 // POST /api/admin/content
-// Body: { topicId, type, url, fileName, uploadedById }
+// Body: { topicId, type, url, fileName }   (uploader = the signed-in admin)
 //
 // Called after either:
 //  - a file has already been uploaded via /api/admin/content/upload (handout/document), or
@@ -12,9 +13,13 @@ import { db } from "@/lib/db";
 // current, rather than deleting it — that history is what "updated material"
 // means: the old version stays queryable, it just isn't shown to employees anymore.
 export async function POST(req: NextRequest) {
-  const { topicId, type, url, fileName, uploadedById } = await req.json();
+  const auth = await requireAdminApi(req);
+  if ("error" in auth) return auth.error;
+  const { admin } = auth;
 
-  if (!topicId || !type || !url || !uploadedById) {
+  const { topicId, type, url, fileName } = (await req.json().catch(() => ({}))) as Record<string, string>;
+
+  if (!topicId || !type || !url) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
@@ -24,7 +29,11 @@ export async function POST(req: NextRequest) {
   });
 
   const asset = await db.contentAsset.create({
-    data: { topicId, type, url, fileName: fileName ?? "linked-video", uploadedById, isCurrent: true },
+    data: { topicId, type, url, fileName: fileName ?? "linked-video", uploadedById: admin.id, isCurrent: true },
+  });
+
+  await db.auditLog.create({
+    data: { adminId: admin.id, action: `content.upload:${type}`, targetId: topicId },
   });
 
   return NextResponse.json({ ok: true, asset });
@@ -34,6 +43,9 @@ export async function POST(req: NextRequest) {
 // Returns the full version history for a topic — current asset first, then
 // everything it replaced, most recent first.
 export async function GET(req: NextRequest) {
+  const auth = await requireAdminApi(req);
+  if ("error" in auth) return auth.error;
+
   const topicId = req.nextUrl.searchParams.get("topicId");
   if (!topicId) {
     return NextResponse.json({ error: "topicId is required" }, { status: 400 });
