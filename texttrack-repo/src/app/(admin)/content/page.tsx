@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { db } from "@/lib/db";
 import ContentUploadForm from "@/components/admin/ContentUploadForm";
 
@@ -6,15 +7,8 @@ import ContentUploadForm from "@/components/admin/ContentUploadForm";
 // needing a live database connection.
 export const dynamic = "force-dynamic";
 
-// TODO: adminId comes from the query string for now — replace with the
-// logged-in admin's session once auth.ts (Milestone 4) is built.
-export default async function ContentManagerPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ adminId?: string }>;
-}) {
-  const { adminId } = await searchParams;
-
+// Protected by src/middleware.ts (signed-in admins only).
+export default async function ContentManagerPage() {
   const tracks = await db.track.findMany({
     include: {
       topics: {
@@ -28,18 +22,13 @@ export default async function ContentManagerPage({
 
   return (
     <main className="min-h-screen px-6 py-10 max-w-3xl mx-auto">
-      <h1 className="text-xl font-bold text-navy mb-1">Track & Content Manager</h1>
+      <Link href="/admin" className="text-xs text-gray-400 hover:text-navy">← Admin</Link>
+      <h1 className="text-xl font-bold text-navy mt-2 mb-1">Track & Content Manager</h1>
       <p className="text-sm text-gray-500 mb-8">
         Upload or replace the learning material attached to each topic. Employees only ever see
         the current version — earlier versions stay on record instead of being deleted.
       </p>
 
-      {!adminId && (
-        <div className="bg-amber-50 border border-amber-300 text-amber-900 text-xs rounded-lg p-3 mb-6">
-          No adminId in the URL — uploads will be rejected until session auth (Milestone 4) is
-          built. For now, append ?adminId=&lt;an Admin row&apos;s id&gt; to test this page.
-        </div>
-      )}
 
       {tracks.length === 0 && (
         <p className="text-sm text-gray-400">No tracks yet — seed or create one to get started.</p>
@@ -76,7 +65,6 @@ export default async function ContentManagerPage({
 
                 <ContentUploadForm
                   topicId={topic.id}
-                  adminId={adminId ?? null}
                   hasExisting={topic.assets.length > 0}
                 />
               </div>

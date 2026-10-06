@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
+import { requireAdminApi } from "@/lib/adminSession";
 
 // POST /api/admin/content/upload
 // Accepts multipart/form-data with a single "file" field.
@@ -8,6 +9,10 @@ import { put } from "@vercel/blob";
 // exactly why video stays on Bunny Stream as a pasted link instead (see
 // src/app/api/admin/content/route.ts and the Security & Content Architecture PDF).
 export async function POST(req: NextRequest) {
+  // Previously unauthenticated — anyone could upload to the blob store.
+  const auth = await requireAdminApi(req);
+  if ("error" in auth) return auth.error;
+
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
 

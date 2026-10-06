@@ -53,8 +53,27 @@ export async function POST(req: NextRequest) {
 
     const finishUrl = `${process.env.PUBLIC_APP_URL}/enroll/confirm?id=${employee.id}`;
     twiml.message(
-      `You're enrolled in TextTrack! Finish setting up your profile: ${finishUrl} Msg & data rates may apply. Reply STOP to cancel.`
+      `You're enrolled in TextTrack! Finish setting up your profile: ${finishUrl} Msg frequency varies. Msg & data rates may apply. Reply HELP for help, STOP to cancel.`
     );
+  } else if (body === "YES") {
+    // Double opt-in confirmation. Only counts for someone who already ticked
+    // the SMS consent box on the web form — a stray "YES" from anyone else is
+    // ignored (no reply), so we never text people who never opted in.
+    const employee = await db.employee.findUnique({
+      where: { phone: from },
+      include: { consent: true },
+    });
+    if (employee?.consent?.smsConsent) {
+      if (!employee.consent.doubleOptInAt) {
+        await db.consentRecord.update({
+          where: { employeeId: employee.id },
+          data: { doubleOptInAt: new Date() },
+        });
+      }
+      twiml.message(
+        "You're confirmed! TextTrack training texts will start soon. Msg frequency varies. Msg & data rates may apply. Reply HELP for help, STOP to cancel."
+      );
+    }
   } else if (body === "STOP") {
     // Twilio's own carrier-level opt-out (if Advanced Opt-Out is on for the
     // Messaging Service) may intercept this before it even reaches here —

@@ -1,67 +1,38 @@
-"use client";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSessionAdmin } from "@/lib/adminSession";
+import LogoutButton from "@/components/admin/LogoutButton";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+export const dynamic = "force-dynamic";
 
-// Temporary stand-in for real admin login (Milestone C). Every admin page
-// reads its adminId from the URL rather than a session; this page just gives
-// that pattern an entry point.
-//
-// TODO: replace with real email + password + MFA login in Milestone C.
 // NOTE: must live at src/app/admin (no parentheses) — inside the (admin)
 // route group it would collide with the homepage.
-export default function AdminEntryPage() {
-  const router = useRouter();
-  const [adminId, setAdminId] = useState("");
+export default async function AdminHome() {
+  const admin = await getSessionAdmin();
+  if (!admin) redirect("/admin/login");
 
-  function go(path: string) {
-    const id = adminId.trim();
-    if (!id) return;
-    router.push(`${path}?adminId=${encodeURIComponent(id)}`);
-  }
+  const tiles = [
+    { href: "/admin/enrollments", title: "Enrollments", body: "Who has signed up, their status, track, and text consent." },
+    { href: "/admin/tracks", title: "Tracks & Topics", body: "Create tracks and add the weekly topics." },
+    { href: "/content", title: "Content Manager", body: "Upload videos and handouts for each topic." },
+  ];
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4">
-      <div className="card w-full max-w-sm p-8">
-        <h1 className="text-lg font-bold text-navy mb-1">Admin Access</h1>
-        <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-          Real admin login isn&apos;t built yet — enter your Admin ID, then choose where to go.
-        </p>
-
-        <label className="block text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-1.5">
-          Admin ID
-        </label>
-        <input
-          type="text"
-          value={adminId}
-          onChange={(e) => setAdminId(e.target.value)}
-          placeholder="e.g. cmg3k9f2a0001..."
-          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm mb-4 focus:outline-none focus:border-navy"
-        />
-
-        <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => go("/admin/tracks")}
-            disabled={!adminId.trim()}
-            className="w-full bg-navy hover:bg-navy-dark disabled:opacity-50 text-white font-semibold text-sm py-3 rounded-lg transition"
-          >
-            Tracks &amp; Topics
-          </button>
-          <button
-            type="button"
-            onClick={() => go("/content")}
-            disabled={!adminId.trim()}
-            className="w-full border border-navy text-navy hover:bg-gray-50 disabled:opacity-50 font-semibold text-sm py-3 rounded-lg transition"
-          >
-            Content Manager
-          </button>
-        </div>
-
-        <p className="text-xs text-gray-400 mt-5 text-center leading-relaxed">
-          Don&apos;t have your Admin ID? Check your seed script output, or ask whoever set up your
-          account.
-        </p>
+    <main className="min-h-screen px-6 py-10 max-w-3xl mx-auto">
+      <div className="flex items-baseline justify-between mb-1">
+        <h1 className="text-xl font-bold text-navy">TextTrack Admin</h1>
+        <LogoutButton />
+      </div>
+      <p className="text-sm text-gray-500 mb-8">
+        Signed in as {admin.name} ({admin.email}).
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {tiles.map((t) => (
+          <Link key={t.href} href={t.href} className="card border border-gray-100 p-5 hover:border-navy transition">
+            <div className="text-sm font-bold text-navy mb-1">{t.title}</div>
+            <div className="text-xs text-gray-500 leading-relaxed">{t.body}</div>
+          </Link>
+        ))}
       </div>
     </main>
   );
