@@ -15,6 +15,7 @@ export default async function AdminHome() {
     { href: "/admin/enrollments", title: "Enrollments", body: "Who has signed up, their status, track, and text consent." },
     { href: "/admin/tracks", title: "Tracks & Topics", body: "Create tracks and add the weekly topics." },
     { href: "/content", title: "Content Manager", body: "Upload videos and handouts for each topic." },
+    { href: "/admin/import", title: "Import curriculum", body: "Load all topics from the curriculum spreadsheet (CSV)." },
   ];
 
   return (
