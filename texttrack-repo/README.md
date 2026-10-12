@@ -49,6 +49,9 @@ See `.env.example` for the full list. At minimum you'll need:
 - `DATABASE_URL` — your Postgres connection string
 - `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_MESSAGING_SERVICE_SID`
 - `SESSION_SECRET` — random string used to sign employee/admin session tokens
+- `MFA_ENCRYPTION_KEY` — random string, 32+ characters, used to encrypt admin authenticator secrets in the database. Keep a copy somewhere safe: losing it locks admins out of their authenticator (fix: `scripts/set-admin-password.ts --reset-mfa`)
+- `PUBLIC_APP_URL` — the site's public address, e.g. `https://your-app.vercel.app` (no trailing slash). Also used to verify Twilio's webhook signature; it must match the URL set in the Twilio Console exactly (`TWILIO_WEBHOOK_BASE_URL` overrides it for that check only)
+- `TWILIO_SIGNATURE_MODE` — optional. Default `enforce` (forged webhooks get a 403). `log` only logs failures; use briefly to debug, then remove
 - `ADMIN_MFA_ISSUER` — display name shown in admin authenticator apps
 
 ## Security model (short version — see the Security & Content Architecture PDF for the rest)
