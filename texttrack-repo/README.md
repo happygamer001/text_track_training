@@ -53,6 +53,7 @@ See `.env.example` for the full list. At minimum you'll need:
 - `PUBLIC_APP_URL` — the site's public address, e.g. `https://your-app.vercel.app` (no trailing slash). Also used to verify Twilio's webhook signature; it must match the URL set in the Twilio Console exactly (`TWILIO_WEBHOOK_BASE_URL` overrides it for that check only)
 - `TWILIO_SIGNATURE_MODE` — optional. Default `enforce` (forged webhooks get a 403). `log` only logs failures; use briefly to debug, then remove
 - `ADMIN_MFA_ISSUER` — display name shown in admin authenticator apps
+- `MONTHLY_TEXT_CAP` — optional; most lesson texts the sender will allow per Central-time month (default 80)
 
 ## Security model (short version — see the Security & Content Architecture PDF for the rest)
 
@@ -89,6 +90,12 @@ Learning material storage (admin upload + employee read-only library) is also bu
   endpoint — see the comment in `api/admin/content/upload/route.ts` for why.
 - `src/app/(employee)/courses/page.tsx` — read-only for employees: view or re-watch
   any topic's current material, anytime. No edit or delete controls exist on this page.
+
+Manual weekly lesson sending is built (`/admin/send`, super admins only): it lists who is due
+which lesson this Central-time week, lets an admin edit the wording per lesson and untick
+people, shows segments/cost, enforces `MONTHLY_TEXT_CAP` on the server, never texts anyone
+twice in a week, and advances each person to the next week only after a successful send.
+The automatic Monday 7:00 AM Central send is not built yet.
 
 Everything else in the repo tree (admin roster/statistics/enrollment pages, employee
 home/messages/notices, and the `auth.ts` session logic beyond what's stubbed) is still
