@@ -144,7 +144,7 @@ export function AddTopicForm({ tracks }: { tracks: TrackOption[] }) {
           <select className={inputCls} value={deliveryFormat} onChange={(e) => setDeliveryFormat(e.target.value)}>
             <option>Text</option>
             <option>Handout</option>
-            <option>Video</option>
+            <option>Portal Video</option>
           </select>
         </div>
       </div>
