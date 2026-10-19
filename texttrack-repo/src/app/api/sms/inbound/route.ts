@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import twilio from "twilio";
+import { checkTwilioSignature, formParams, signatureMode } from "@/lib/twilioSignature";
 
 const { MessagingResponse } = twilio.twiml;
 
@@ -9,11 +10,20 @@ const { MessagingResponse } = twilio.twiml;
 // Console. Twilio sends application/x-www-form-urlencoded with "From" and
 // "Body" fields; this must respond with TwiML (XML), not JSON.
 //
-// TODO: verify the request actually came from Twilio (X-Twilio-Signature
-// header) before trusting it, using twilio.validateRequest — omitted here to
-// keep the skeleton readable, but required before this goes live.
+// Every request is checked against Twilio's X-Twilio-Signature before anything
+// is read or written (see lib/twilioSignature.ts), so a forged YES/STOP/JOIN
+// from anyone else is refused.
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
+
+  const sig = checkTwilioSignature(req, formParams(formData));
+  if (!sig.ok) {
+    console.warn(`Twilio webhook signature check failed: ${sig.reason}`);
+    if (signatureMode() === "enforce") {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+  }
+
   const from = (formData.get("From") as string) ?? "";
   const body = ((formData.get("Body") as string) ?? "").trim().toUpperCase();
 

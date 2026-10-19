@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { verifyTotp } from "@/lib/totp";
+import { decryptSecret, encryptSecret, encryptionConfigured, isEncrypted } from "@/lib/secretBox";
 import {
   PENDING_COOKIE,
   SESSION_COOKIE,
@@ -38,7 +39,13 @@ export async function POST(req: NextRequest) {
   }
 
   const enrolling = !admin.mfaSecret;
-  const secret = admin.mfaSecret ?? pending.setupSecret;
+  let secret: string | undefined;
+  try {
+    secret = admin.mfaSecret ? decryptSecret(admin.mfaSecret) : pending.setupSecret;
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ error: "Login isn't configured correctly (authenticator key missing on the server)." }, { status: 500 });
+  }
   if (!secret || !verifyTotp(secret, parsed.data.code)) {
     return NextResponse.json({ error: "That code didn't match. Try the newest code." }, { status: 401 });
   }
@@ -47,12 +54,17 @@ export async function POST(req: NextRequest) {
     // Only claim the slot if nobody enrolled in the meantime.
     const claimed = await db.admin.updateMany({
       where: { id: admin.id, mfaSecret: null },
-      data: { mfaSecret: secret },
+      data: { mfaSecret: encryptSecret(secret) },
     });
     if (claimed.count === 0) {
       return NextResponse.json({ error: "Authenticator was already set up. Start again." }, { status: 409 });
     }
     await db.auditLog.create({ data: { adminId: admin.id, action: "auth.mfa_enrolled" } });
+  }
+
+  // Upgrade an older plain-text secret to encrypted now that the code is proven good.
+  if (!enrolling && admin.mfaSecret && !isEncrypted(admin.mfaSecret) && encryptionConfigured()) {
+    await db.admin.update({ where: { id: admin.id }, data: { mfaSecret: encryptSecret(secret) } });
   }
 
   await db.auditLog.create({ data: { adminId: admin.id, action: "auth.login" } });
