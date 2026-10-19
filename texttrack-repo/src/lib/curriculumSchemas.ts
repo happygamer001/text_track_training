@@ -21,3 +21,10 @@ export const createTopicSchema = z.object({
 
 export type CreateTrackInput = z.infer<typeof createTrackSchema>;
 export type CreateTopicInput = z.infer<typeof createTopicSchema>;
+
+export const DELIVERY_FORMATS = ["Text", "Handout", "Portal Video"] as const;
+
+// Editing a topic: same fields as creating one, minus the track (topics don't move tracks).
+export const updateTopicSchema = createTopicSchema.omit({ trackId: true });
+export const updateTrackSchema = createTrackSchema;
+export type UpdateTopicInput = z.infer<typeof updateTopicSchema>;
